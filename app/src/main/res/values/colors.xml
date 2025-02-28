@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="green">#4CAF50</color>
+    <color name="red">#E91E63</color>
+
+
+
+    <!-- Primary Colors -->
+    <color name="primary">#1E88E5</color>  <!-- Blue -->
+    <color name="primary_dark">#1565C0</color>  <!-- Darker Blue -->
+    <color name="primary_light">#64B5F6</color>  <!-- Lighter Blue -->
+
+    <!-- Text & Background Colors -->
+    <color name="gray">#757575</color>
+    <color name="light_gray">#F5F5F5</color>
+
+    <!-- Button States -->
+    <color name="button_pressed">#1565C0</color>
+    <color name="button_normal">#1E88E5</color>
+
+    <!-- Light Mode Colors -->
+    <color name="secondary">#03DAC6</color>
+
+    <!-- Dark Mode Colors -->
+    <color name="primaryDark">#3700B3</color>
+    <color name="secondaryDark">#018786</color>
+
+
+
+</resources>

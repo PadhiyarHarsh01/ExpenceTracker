@@ -2,6 +2,7 @@ package com.tech.expencetraker.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -53,6 +54,9 @@ class SignupActivity : AppCompatActivity() {
         // Initialize Firebase
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance().getReference("users")
+
+        // Debugging Logs
+        Log.d("SignupActivity", "Views initialized successfully")
 
         btnSignup.setOnClickListener {
             val fullName = etFullName.text.toString().trim()
@@ -114,27 +118,30 @@ class SignupActivity : AppCompatActivity() {
     private fun registerUser(fullName: String, email: String, password: String) {
         progressBar.visibility = View.VISIBLE
 
-        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-            progressBar.visibility = View.GONE
-            if (task.isSuccessful) {
-                val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                progressBar.visibility = View.GONE
+                if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
 
-                val userMap = mapOf(
-                    "fullName" to fullName,
-                    "email" to email,
-                    "userId" to userId
-                )
+                    val userMap = mapOf(
+                        "fullName" to fullName,
+                        "email" to email,
+                        "userId" to userId
+                    )
 
-                database.child(userId).setValue(userMap).addOnSuccessListener {
-                    Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    finish()
-                }.addOnFailureListener {
-                    Toast.makeText(this, "Failed to save user data!", Toast.LENGTH_SHORT).show()
+                    database.child(userId).setValue(userMap)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Signup successful!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this, HomeActivity::class.java))
+                            finish()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Failed to save user data!", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(this, "Signup failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                Toast.makeText(this, "Signup failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
             }
-        }
     }
 }

@@ -20,6 +20,7 @@ import com.tech.expencetraker.ui.transactions.TransactionDetailsActivity
 
 class HomeActivity : AppCompatActivity() {
 
+    // Define UI elements
     private lateinit var tvBalance: TextView
     private lateinit var tvIncome: TextView
     private lateinit var tvExpense: TextView
@@ -28,24 +29,24 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnLogout: Button
     private lateinit var progressBar: ProgressBar
 
+    // Firebase & Data
     private lateinit var transactionsAdapter: TransactionsAdapter
     private lateinit var transactionsList: ArrayList<TransactionModel>
-
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
+        setContentView(R.layout.activity_home)  // ✅ Linking XML file
 
-        // Initialize views
+        // Initialize UI components
         tvBalance = findViewById(R.id.tvBalance)
         tvIncome = findViewById(R.id.tvIncome)
         tvExpense = findViewById(R.id.tvExpense)
         rvTransactions = findViewById(R.id.rvTransactions)
         fabAddTransaction = findViewById(R.id.fabAddTransaction)
         btnLogout = findViewById(R.id.btnLogout)
-//        progressBar = findViewById(R.id.progressBar)
+        progressBar = findViewById(R.id.progressBar)  // ✅ Ensure it's initialized
 
         // Set up RecyclerView
         rvTransactions.layoutManager = LinearLayoutManager(this)
@@ -61,7 +62,7 @@ class HomeActivity : AppCompatActivity() {
         }
         rvTransactions.adapter = transactionsAdapter
 
-        // Initialize Firebase
+        // Firebase Authentication
         auth = FirebaseAuth.getInstance()
         val userId = auth.currentUser?.uid
         if (userId == null) {
@@ -70,9 +71,10 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
+        // Firebase Database Reference
         database = FirebaseDatabase.getInstance().getReference("users").child(userId)
 
-        // Load Data
+        // Load data from Firebase
         loadUserData()
         loadTransactions()
 
@@ -90,12 +92,13 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun loadUserData() {
-        progressBar.visibility = View.VISIBLE
+        progressBar.visibility = View.VISIBLE  // ✅ Show ProgressBar when loading
+
         database.child("balance").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val balance = snapshot.getValue(Double::class.java) ?: 0.0
                 tvBalance.text = "₹%.2f".format(balance)
-                progressBar.visibility = View.GONE
+                progressBar.visibility = View.GONE  // ✅ Hide ProgressBar after loading
             }
 
             override fun onCancelled(error: DatabaseError) {

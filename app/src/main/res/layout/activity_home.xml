@@ -13,7 +13,7 @@
         android:id="@+id/tvBalance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Total Balance: ₹0.00"
+        android:text="@string/total_balance_0_00"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -24,7 +24,7 @@
         android:id="@+id/tvIncome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Income: ₹0.00"
+        android:text="@string/income_0_00"
         android:textSize="16sp"
         android:textColor="@color/green"
         app:layout_constraintTop_toBottomOf="@id/tvBalance"
@@ -35,7 +35,7 @@
         android:id="@+id/tvExpense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Expenses: ₹0.00"
+        android:text="@string/expenses_0_00"
         android:textSize="16sp"
         android:textColor="@color/red"
         app:layout_constraintTop_toBottomOf="@id/tvIncome"
@@ -74,15 +74,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="80dp"/>
 
-    <!-- Logout Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Logout"
-        android:backgroundTint="@color/primary"
-        android:textColor="@color/white"
-        android:layout_marginTop="16dp"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
+        android:background="?android:attr/windowBackground"
+        app:itemIconTint="#EB0E7DE9"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

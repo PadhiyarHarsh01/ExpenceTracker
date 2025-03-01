@@ -16,6 +16,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.tech.expencetraker.R
 import com.tech.expencetraker.ui.home.HomeActivity
+import java.security.MessageDigest
 
 class SignupActivity : AppCompatActivity() {
 
@@ -55,7 +56,6 @@ class SignupActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance().getReference("users")
 
-        // Debugging Logs
         Log.d("SignupActivity", "Views initialized successfully")
 
         btnSignup.setOnClickListener {
@@ -124,10 +124,14 @@ class SignupActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
 
+                    // Hash the password before storing it
+                    val hashedPassword = hashPassword(password)
+
                     val userMap = mapOf(
                         "fullName" to fullName,
                         "email" to email,
-                        "userId" to userId
+                        "userId" to userId,
+                        "password" to hashedPassword // Store hashed password instead of plain text
                     )
 
                     database.child(userId).setValue(userMap)
@@ -143,5 +147,13 @@ class SignupActivity : AppCompatActivity() {
                     Toast.makeText(this, "Signup failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    // Function to hash password using SHA-256
+    private fun hashPassword(password: String): String {
+        val bytes = password.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+        return digest.joinToString("") { "%02x".format(it) }
     }
 }

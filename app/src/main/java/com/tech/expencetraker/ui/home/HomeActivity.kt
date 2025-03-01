@@ -3,33 +3,33 @@ package com.tech.expencetraker.ui.home
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.tech.expencetraker.R
 import com.tech.expencetraker.model.TransactionModel
+import com.tech.expencetraker.ui.profile.ProfileActivity
+import com.tech.expencetraker.ui.settings.SettingsActivity
 import com.tech.expencetraker.ui.transactions.AddTransactionActivity
 import com.tech.expencetraker.ui.transactions.TransactionDetailsActivity
 
 class HomeActivity : AppCompatActivity() {
 
-    // Define UI elements
+    // UI Elements
     private lateinit var tvBalance: TextView
     private lateinit var tvIncome: TextView
     private lateinit var tvExpense: TextView
     private lateinit var rvTransactions: RecyclerView
     private lateinit var fabAddTransaction: FloatingActionButton
-    private lateinit var btnLogout: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var bottomNavigationView: BottomNavigationView
 
-    // Firebase & Data
+    // Firebase
     private lateinit var transactionsAdapter: TransactionsAdapter
     private lateinit var transactionsList: ArrayList<TransactionModel>
     private lateinit var auth: FirebaseAuth
@@ -37,7 +37,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)  // ✅ Linking XML file
+        setContentView(R.layout.activity_home)
 
         // Initialize UI components
         tvBalance = findViewById(R.id.tvBalance)
@@ -45,19 +45,20 @@ class HomeActivity : AppCompatActivity() {
         tvExpense = findViewById(R.id.tvExpense)
         rvTransactions = findViewById(R.id.rvTransactions)
         fabAddTransaction = findViewById(R.id.fabAddTransaction)
-        btnLogout = findViewById(R.id.btnLogout)
-        progressBar = findViewById(R.id.progressBar)  // ✅ Ensure it's initialized
+        progressBar = findViewById(R.id.progressBar)
+        bottomNavigationView = findViewById(R.id.bottomNavigationView)
 
-        // Set up RecyclerView
+        // RecyclerView Setup
         rvTransactions.layoutManager = LinearLayoutManager(this)
         transactionsList = arrayListOf()
         transactionsAdapter = TransactionsAdapter(transactionsList) { transaction ->
-            val intent = Intent(this, TransactionDetailsActivity::class.java)
-            intent.putExtra("transactionId", transaction.id)
-            intent.putExtra("amount", transaction.amount)
-            intent.putExtra("category", transaction.category)
-            intent.putExtra("date", transaction.date)
-            intent.putExtra("description", transaction.description)
+            val intent = Intent(this, TransactionDetailsActivity::class.java).apply {
+                putExtra("transactionId", transaction.id)
+                putExtra("amount", transaction.amount)
+                putExtra("category", transaction.category)
+                putExtra("date", transaction.date)
+                putExtra("description", transaction.description)
+            }
             startActivity(intent)
         }
         rvTransactions.adapter = transactionsAdapter
@@ -74,7 +75,7 @@ class HomeActivity : AppCompatActivity() {
         // Firebase Database Reference
         database = FirebaseDatabase.getInstance().getReference("users").child(userId)
 
-        // Load data from Firebase
+        // Load Data
         loadUserData()
         loadTransactions()
 
@@ -83,22 +84,36 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, AddTransactionActivity::class.java))
         }
 
-        // Logout Button
-        btnLogout.setOnClickListener {
-            auth.signOut()
-            Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show()
-            finish()
+        // Bottom Navigation
+        bottomNavigationView.selectedItemId = R.id.nav_home
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> return@setOnItemSelectedListener true
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    overridePendingTransition(0, 0)
+                    finish()
+                    return@setOnItemSelectedListener true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    overridePendingTransition(0, 0)
+                    finish()
+                    return@setOnItemSelectedListener true
+                }
+            }
+            false
         }
     }
 
     private fun loadUserData() {
-        progressBar.visibility = View.VISIBLE  // ✅ Show ProgressBar when loading
+        progressBar.visibility = View.VISIBLE
 
         database.child("balance").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val balance = snapshot.getValue(Double::class.java) ?: 0.0
                 tvBalance.text = "₹%.2f".format(balance)
-                progressBar.visibility = View.GONE  // ✅ Hide ProgressBar after loading
+                progressBar.visibility = View.GONE
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -132,12 +147,12 @@ class HomeActivity : AppCompatActivity() {
 
         database.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val newTransactions = ArrayList<TransactionModel>()
+                transactionsList.clear()
                 for (data in snapshot.children) {
                     val transaction = data.getValue(TransactionModel::class.java)
-                    transaction?.let { newTransactions.add(it) }
+                    transaction?.let { transactionsList.add(it) }
                 }
-                transactionsAdapter.updateList(newTransactions) // Use the new update method
+                transactionsAdapter.notifyDataSetChanged()
             }
 
             override fun onCancelled(error: DatabaseError) {

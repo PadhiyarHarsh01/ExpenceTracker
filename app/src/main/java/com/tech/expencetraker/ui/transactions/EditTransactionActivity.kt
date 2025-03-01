@@ -51,7 +51,7 @@ class EditTransactionActivity : AppCompatActivity() {
 
         // Get Transaction Data from Intent
         transactionId = intent.getStringExtra("transactionId")
-        etAmount.setText(intent.getStringExtra("amount") ?: "")
+        etAmount.setText(intent.getDoubleExtra("amount", 0.0).toString()) // Fixed amount retrieval
         etCategory.setText(intent.getStringExtra("category") ?: "")
         etDate.setText(intent.getStringExtra("date") ?: "")
         etDescription.setText(intent.getStringExtra("description") ?: "")
@@ -87,13 +87,19 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun updateTransaction() {
-        val amount = etAmount.text.toString().trim()
+        val amountText = etAmount.text.toString().trim()
         val category = etCategory.text.toString().trim()
         val date = etDate.text.toString().trim()
         val description = etDescription.text.toString().trim()
 
-        if (amount.isEmpty() || category.isEmpty() || date.isEmpty()) {
+        if (amountText.isEmpty() || category.isEmpty() || date.isEmpty()) {
             Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val amount = amountText.toDoubleOrNull()
+        if (amount == null || amount <= 0) {
+            Toast.makeText(this, "Enter a valid amount", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -107,7 +113,8 @@ class EditTransactionActivity : AppCompatActivity() {
             "amount" to amount,
             "category" to category,
             "date" to date,
-            "description" to description
+            "description" to description,
+            "timestamp" to System.currentTimeMillis() // Update timestamp to reflect changes
         )
 
         progressBar.visibility = View.VISIBLE

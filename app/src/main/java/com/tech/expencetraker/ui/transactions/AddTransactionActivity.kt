@@ -72,13 +72,19 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun saveTransaction() {
-        val amount = etAmount.text.toString().trim()
+        val amountText = etAmount.text.toString().trim()
         val category = etCategory.text.toString().trim()
         val date = etDate.text.toString().trim()
         val description = etDescription.text.toString().trim()
 
-        if (amount.isEmpty() || category.isEmpty() || date.isEmpty()) {
+        if (amountText.isEmpty() || category.isEmpty() || date.isEmpty()) {
             Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val amount = amountText.toDoubleOrNull()
+        if (amount == null) {
+            Toast.makeText(this, "Enter a valid amount", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -89,19 +95,22 @@ class AddTransactionActivity : AppCompatActivity() {
         }
 
         val transactionId = UUID.randomUUID().toString()  // Unique ID for transaction
+        val timestamp = System.currentTimeMillis()  // Store timestamp for sorting
 
         val transaction = mapOf(
             "transactionId" to transactionId,
-            "amount" to amount,
+            "amount" to amount,  // Stored as Double
             "category" to category,
             "date" to date,
-            "description" to description
+            "description" to description,
+            "timestamp" to timestamp  // Ensuring transactions can be sorted by time
         )
 
+        // Disable button and show progress while saving
         progressBar.visibility = View.VISIBLE
         btnSaveTransaction.isEnabled = false
 
-        dbRef.child("transactions").child(userId).child(transactionId).setValue(transaction)
+        dbRef.child("users").child(userId).child("transactions").child(transactionId).setValue(transaction)
             .addOnSuccessListener {
                 progressBar.visibility = View.GONE
                 btnSaveTransaction.isEnabled = true

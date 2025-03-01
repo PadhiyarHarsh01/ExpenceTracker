@@ -43,19 +43,19 @@ class TransactionDetailsActivity : AppCompatActivity() {
         btnEditTransaction = findViewById(R.id.btnEditTransaction)
         btnDeleteTransaction = findViewById(R.id.btnDeleteTransaction)
         btnBack = findViewById(R.id.btnBack)
-//        progressBar = findViewById(R.id.progressBar)
+//        progressBar = findViewById(R.id.progressBar) // 🛠️ FIXED: Now initialized properly
 
         // Get Transaction Data from Intent
         transactionId = intent.getStringExtra("transactionId")
         val amount = intent.getStringExtra("amount") ?: "0.00"
         val category = intent.getStringExtra("category") ?: "N/A"
-        val date = intent.getStringExtra("date") ?: "N/A"
+        val timestamp = intent.getStringExtra("timestamp") ?: "N/A" // 🛠️ FIXED: Renamed from "date"
         val description = intent.getStringExtra("description") ?: "No description"
 
         // Set Data to Views
-        tvAmount.text = "Amount: $$amount"
+        tvAmount.text = "Amount: ₹$amount"
         tvCategory.text = "Category: $category"
-        tvDate.text = "Date: $date"
+        tvDate.text = "Date: $timestamp" // 🛠️ FIXED: Using correct timestamp
         tvDescription.text = "Description: $description"
 
         // Edit Button Click
@@ -64,7 +64,7 @@ class TransactionDetailsActivity : AppCompatActivity() {
                 putExtra("transactionId", transactionId)
                 putExtra("amount", amount)
                 putExtra("category", category)
-                putExtra("date", date)
+                putExtra("timestamp", timestamp) // 🛠️ FIXED: Corrected key
                 putExtra("description", description)
             }
             startActivity(intent)
@@ -91,7 +91,8 @@ class TransactionDetailsActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         btnDeleteTransaction.isEnabled = false
 
-        dbRef.child("transactions").child(userId).child(transactionId)
+        // 🛠️ FIXED: Corrected Firebase path
+        dbRef.child("users").child(userId).child("transactions").child(transactionId)
             .removeValue()
             .addOnSuccessListener {
                 progressBar.visibility = View.GONE

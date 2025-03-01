@@ -17,6 +17,7 @@ import com.tech.expencetraker.ui.profile.ProfileActivity
 import com.tech.expencetraker.ui.settings.SettingsActivity
 import com.tech.expencetraker.ui.transactions.AddTransactionActivity
 import com.tech.expencetraker.ui.transactions.TransactionDetailsActivity
+import java.util.*
 
 class HomeActivity : AppCompatActivity() {
 
@@ -31,7 +32,7 @@ class HomeActivity : AppCompatActivity() {
 
     // Firebase
     private lateinit var transactionsAdapter: TransactionsAdapter
-    private lateinit var transactionsList: ArrayList<TransactionModel>
+    private var transactionsList: ArrayList<TransactionModel> = arrayListOf()
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
 
@@ -50,14 +51,13 @@ class HomeActivity : AppCompatActivity() {
 
         // RecyclerView Setup
         rvTransactions.layoutManager = LinearLayoutManager(this)
-        transactionsList = arrayListOf()
         transactionsAdapter = TransactionsAdapter(transactionsList) { transaction ->
             val intent = Intent(this, TransactionDetailsActivity::class.java).apply {
-                putExtra("transactionId", transaction.id)
+                putExtra("transactionId", transaction.transactionId)  // Fixed issue
                 putExtra("amount", transaction.amount)
                 putExtra("category", transaction.category)
-                putExtra("date", transaction.date)
                 putExtra("description", transaction.description)
+                putExtra("timestamp", transaction.timestamp)
             }
             startActivity(intent)
         }
@@ -76,7 +76,6 @@ class HomeActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance().getReference("users").child(userId)
 
         // Load Data
-        loadUserData()
         loadTransactions()
 
         // Add Transaction Button
@@ -106,57 +105,46 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadUserData() {
-        progressBar.visibility = View.VISIBLE
-
-        database.child("balance").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val balance = snapshot.getValue(Double::class.java) ?: 0.0
-                tvBalance.text = "₹%.2f".format(balance)
-                progressBar.visibility = View.GONE
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@HomeActivity, "Failed to load balance!", Toast.LENGTH_SHORT).show()
-                progressBar.visibility = View.GONE
-            }
-        })
-
-        database.child("income").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val income = snapshot.getValue(Double::class.java) ?: 0.0
-                tvIncome.text = "₹%.2f".format(income)
-            }
-
-            override fun onCancelled(error: DatabaseError) {}
-        })
-
-        database.child("expense").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val expense = snapshot.getValue(Double::class.java) ?: 0.0
-                tvExpense.text = "₹%.2f".format(expense)
-            }
-
-            override fun onCancelled(error: DatabaseError) {}
-        })
-    }
-
     private fun loadTransactions() {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val database = FirebaseDatabase.getInstance().getReference("users").child(userId).child("transactions")
+        progressBar.visibility = View.VISIBLE
+        val userId = auth.currentUser?.uid ?: return
+        val transactionRef = database.child("transactions")
 
-        database.addValueEventListener(object : ValueEventListener {
+        transactionRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                transactionsList.clear()
+                val newTransactions = arrayListOf<TransactionModel>()
+                var totalIncome = 0.0
+                var totalExpense = 0.0
+
                 for (data in snapshot.children) {
                     val transaction = data.getValue(TransactionModel::class.java)
-                    transaction?.let { transactionsList.add(it) }
+                    transaction?.let {
+                        newTransactions.add(it)
+
+                        // Calculate total income and expense
+                        if (it.amount ?: 0.0 > 0) {
+                            totalIncome += it.amount ?: 0.0
+                        } else {
+                            totalExpense += it.amount ?: 0.0
+                        }
+                    }
                 }
-                transactionsAdapter.notifyDataSetChanged()
+
+                // Sort transactions by timestamp (latest first)
+                newTransactions.sortByDescending { it.timestamp }
+
+                // Update UI
+                transactionsAdapter.updateList(newTransactions) // Fixed update issue
+                tvIncome.text = "₹%.2f".format(totalIncome)
+                tvExpense.text = "₹%.2f".format(totalExpense)
+                tvBalance.text = "₹%.2f".format(totalIncome + totalExpense) // Balance calculation
+
+                progressBar.visibility = View.GONE
             }
 
             override fun onCancelled(error: DatabaseError) {
                 Toast.makeText(this@HomeActivity, "Failed to load transactions!", Toast.LENGTH_SHORT).show()
+                progressBar.visibility = View.GONE
             }
         })
     }

@@ -26,6 +26,9 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var dbRef: DatabaseReference
 
+    private val expenseCategories = arrayOf("Food", "Transport", "Shopping", "Bills", "Other")
+    private val incomeCategories = arrayOf("Salary", "Bonus", "Investment", "Other Income")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
@@ -45,9 +48,9 @@ class AddTransactionActivity : AppCompatActivity() {
         // Set Date Picker
         etDate.setOnClickListener { showDatePickerDialog() }
 
-        // Set predefined category suggestions
-        val categories = arrayOf("Food", "Transport", "Shopping", "Bills", "Salary", "Other")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, categories)
+        // Set category suggestions
+        val allCategories = expenseCategories + incomeCategories
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, allCategories)
         etCategory.setAdapter(adapter)
 
         // Save transaction on button click
@@ -88,6 +91,9 @@ class AddTransactionActivity : AppCompatActivity() {
             return
         }
 
+        // Adjust amount based on category (negative for expenses)
+        val finalAmount = if (category in expenseCategories) -amount else amount
+
         val userId = auth.currentUser?.uid
         if (userId == null) {
             Toast.makeText(this, "User not authenticated", Toast.LENGTH_SHORT).show()
@@ -99,11 +105,11 @@ class AddTransactionActivity : AppCompatActivity() {
 
         val transaction = mapOf(
             "transactionId" to transactionId,
-            "amount" to amount,  // Stored as Double
+            "amount" to finalAmount,  // Adjusted amount (negative for expenses)
             "category" to category,
             "date" to date,
             "description" to description,
-            "timestamp" to timestamp  // Ensuring transactions can be sorted by time
+            "timestamp" to timestamp
         )
 
         // Disable button and show progress while saving

@@ -23,20 +23,16 @@ class TransactionsAdapter(
         private val tvDescription: TextView = itemView.findViewById(R.id.tvDescription)
 
         fun bind(transaction: TransactionModel) {
-            // Format amount as currency safely
-            val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
-            tvAmount.text = currencyFormat.format(transaction.amount ?: 0.0)
+            // Format amount as currency (ensure it's never null)
+            val currencyFormat = NumberFormat.getCurrencyInstance(Locale("en", "IN")) // Indian format
+            tvAmount.text = currencyFormat.format(transaction.amount)
 
-            // Set category and description with fallback values
+            // Set category and description
             tvCategory.text = transaction.category ?: "Unknown"
             tvDescription.text = transaction.description ?: "No description"
 
-            // Convert timestamp to readable date safely
-            val formattedDate = transaction.timestamp?.let {
-                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                sdf.format(Date(it))
-            } ?: "N/A" // Default text if timestamp is null
-
+            // Convert timestamp to readable date
+            val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(transaction.timestamp))
             tvDate.text = formattedDate
 
             // Handle item click event
@@ -45,8 +41,7 @@ class TransactionsAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_transaction, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_transaction, parent, false)
         return TransactionViewHolder(view)
     }
 

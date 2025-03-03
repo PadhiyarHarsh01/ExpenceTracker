@@ -8,46 +8,74 @@
     android:background="@color/white"
     tools:context=".ui.home.HomeActivity">
 
-    <!-- Balance Summary -->
-    <TextView
-        android:id="@+id/tvBalance"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/etIncomeInput"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/total_balance_0_00"
-        android:textSize="20sp"
-        android:textStyle="bold"
+        android:hint="Enter Income"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="20dp"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"/>
+
+
+    <Button
+        android:id="@+id/btnSetIncome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Income"
+        android:backgroundTint="@color/primary"
+        android:textColor="@android:color/white"
+        app:layout_constraintTop_toBottomOf="@id/etIncomeInput"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/tvIncome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/income_0_00"
-        android:textSize="16sp"
-        android:textColor="@color/green"
-        app:layout_constraintTop_toBottomOf="@id/tvBalance"
+        android:text="Income: ₹0.00"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/btnSetIncome"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="8dp" />
+
 
     <TextView
         android:id="@+id/tvExpense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/expenses_0_00"
-        android:textSize="16sp"
+        android:text="Expense: ₹0.00"
+        android:textSize="18sp"
         android:textColor="@color/red"
+        android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/tvIncome"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/tvBalance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Balance: ₹0.00"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/tvExpense"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="8dp" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tvExpense"
+        app:layout_constraintTop_toBottomOf="@id/tvBalance"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>

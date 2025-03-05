@@ -8,10 +8,12 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.tech.expencetraker.R
+import com.tech.expencetraker.utils.SimpleTextWatcher
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -24,6 +26,10 @@ class EditTransactionActivity : AppCompatActivity() {
     private lateinit var btnSaveChanges: MaterialButton
     private lateinit var btnBack: MaterialButton
     private lateinit var progressBar: ProgressBar
+    private lateinit var amountInputLayout: TextInputLayout
+    private lateinit var categoryInputLayout: TextInputLayout
+    private lateinit var dateInputLayout: TextInputLayout
+    private lateinit var descriptionInputLayout: TextInputLayout
 
     private lateinit var auth: FirebaseAuth
     private lateinit var dbRef: DatabaseReference
@@ -49,12 +55,23 @@ class EditTransactionActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
         progressBar = findViewById(R.id.progressBar)
 
+        amountInputLayout = findViewById(R.id.amountInputLayout)
+        categoryInputLayout = findViewById(R.id.categoryInputLayout)
+        dateInputLayout = findViewById(R.id.dateInputLayout)
+        descriptionInputLayout = findViewById(R.id.descriptionInputLayout)
+
         // Get Transaction Data from Intent
         transactionId = intent.getStringExtra("transactionId")
-        etAmount.setText(intent.getDoubleExtra("amount", 0.0).toString()) // Fixed amount retrieval
-        etCategory.setText(intent.getStringExtra("category") ?: "")
-        etDate.setText(intent.getStringExtra("date") ?: "")
-        etDescription.setText(intent.getStringExtra("description") ?: "")
+
+        if (intent != null && transactionId != null) {
+            etAmount.setText(intent.getDoubleExtra("amount", 0.0).toString())
+            etCategory.setText(intent.getStringExtra("category") ?: "")
+            etDate.setText(intent.getStringExtra("date") ?: "")
+            etDescription.setText(intent.getStringExtra("description") ?: "")
+        } else {
+            Toast.makeText(this, "Error: Transaction data not found", Toast.LENGTH_SHORT).show()
+            finish()
+        }
 
         // Set Date Picker
         etDate.setOnClickListener { showDatePickerDialog() }
@@ -69,6 +86,9 @@ class EditTransactionActivity : AppCompatActivity() {
 
         // Back Button
         btnBack.setOnClickListener { finish() }
+
+        // Live validation to remove errors as user types
+        setupValidationListeners()
     }
 
     private fun showDatePickerDialog() {
@@ -92,14 +112,11 @@ class EditTransactionActivity : AppCompatActivity() {
         val date = etDate.text.toString().trim()
         val description = etDescription.text.toString().trim()
 
-        if (amountText.isEmpty() || category.isEmpty() || date.isEmpty()) {
-            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (!validateInputs(amountText, category, date)) return
 
         val amount = amountText.toDoubleOrNull()
         if (amount == null || amount <= 0) {
-            Toast.makeText(this, "Enter a valid amount", Toast.LENGTH_SHORT).show()
+            amountInputLayout.error = "Enter a valid amount"
             return
         }
 
@@ -114,7 +131,7 @@ class EditTransactionActivity : AppCompatActivity() {
             "category" to category,
             "date" to date,
             "description" to description,
-            "timestamp" to System.currentTimeMillis() // Update timestamp to reflect changes
+            "timestamp" to System.currentTimeMillis()
         )
 
         progressBar.visibility = View.VISIBLE
@@ -133,5 +150,38 @@ class EditTransactionActivity : AppCompatActivity() {
                 btnSaveChanges.isEnabled = true
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun validateInputs(amount: String, category: String, date: String): Boolean {
+        var isValid = true
+
+        if (amount.isEmpty()) {
+            amountInputLayout.error = "Amount is required"
+            isValid = false
+        } else {
+            amountInputLayout.error = null
+        }
+
+        if (category.isEmpty()) {
+            categoryInputLayout.error = "Category is required"
+            isValid = false
+        } else {
+            categoryInputLayout.error = null
+        }
+
+        if (date.isEmpty()) {
+            dateInputLayout.error = "Date is required"
+            isValid = false
+        } else {
+            dateInputLayout.error = null
+        }
+
+        return isValid
+    }
+
+    private fun setupValidationListeners() {
+        etAmount.addTextChangedListener(SimpleTextWatcher { amountInputLayout.error = null })
+        etCategory.addTextChangedListener(SimpleTextWatcher { categoryInputLayout.error = null })
+        etDate.addTextChangedListener(SimpleTextWatcher { dateInputLayout.error = null })
     }
 }

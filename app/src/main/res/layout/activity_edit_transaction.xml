@@ -56,13 +56,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <AutoCompleteTextView
             android:id="@+id/etCategory"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:padding="14dp" />
+            android:padding="14dp"
+            android:completionThreshold="1" />
     </com.google.android.material.textfield.TextInputLayout>
+
 
     <!-- Date Picker -->
     <com.google.android.material.textfield.TextInputLayout

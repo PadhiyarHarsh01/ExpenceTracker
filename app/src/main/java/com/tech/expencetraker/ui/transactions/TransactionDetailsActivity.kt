@@ -2,13 +2,13 @@ package com.tech.expencetraker.ui.transactions
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import com.tech.expencetraker.R
 
 class TransactionDetailsActivity : AppCompatActivity() {
@@ -26,6 +26,7 @@ class TransactionDetailsActivity : AppCompatActivity() {
     private lateinit var dbRef: DatabaseReference
 
     private var transactionId: String? = null
+    private var userId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +35,7 @@ class TransactionDetailsActivity : AppCompatActivity() {
         // Initialize Firebase
         auth = FirebaseAuth.getInstance()
         dbRef = FirebaseDatabase.getInstance().reference
+        userId = auth.currentUser?.uid
 
         // Initialize Views
         tvAmount = findViewById(R.id.tvAmount)
@@ -43,36 +45,31 @@ class TransactionDetailsActivity : AppCompatActivity() {
         btnEditTransaction = findViewById(R.id.btnEditTransaction)
         btnDeleteTransaction = findViewById(R.id.btnDeleteTransaction)
         btnBack = findViewById(R.id.btnBack)
-//        progressBar = findViewById(R.id.progressBar) // 🛠️ FIXED: Now initialized properly
+        progressBar = findViewById(R.id.progressBar)
 
-        // Get Transaction Data from Intent
+        // Get Transaction ID from Intent
         transactionId = intent.getStringExtra("transactionId")
-        val amount = intent.getStringExtra("amount") ?: "0.00"
-        val category = intent.getStringExtra("category") ?: "N/A"
-        val timestamp = intent.getStringExtra("timestamp") ?: "N/A" // 🛠️ FIXED: Renamed from "date"
-        val description = intent.getStringExtra("description") ?: "No description"
 
-        // Set Data to Views
-        tvAmount.text = "Amount: ₹$amount"
-        tvCategory.text = "Category: $category"
-        tvDate.text = "Date: $timestamp" // 🛠️ FIXED: Using correct timestamp
-        tvDescription.text = "Description: $description"
+        if (transactionId.isNullOrEmpty() || userId.isNullOrEmpty()) {
+            Toast.makeText(this, "Error: Transaction ID or User ID is missing", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        // Fetch Transaction Details from Firebase
+        fetchTransactionDetails()
 
         // Edit Button Click
         btnEditTransaction.setOnClickListener {
             val intent = Intent(this, EditTransactionActivity::class.java).apply {
                 putExtra("transactionId", transactionId)
-                putExtra("amount", amount)
-                putExtra("category", category)
-                putExtra("timestamp", timestamp) // 🛠️ FIXED: Corrected key
-                putExtra("description", description)
             }
             startActivity(intent)
         }
 
         // Delete Button Click
         btnDeleteTransaction.setOnClickListener {
-            transactionId?.let { id -> deleteTransaction(id) }
+            deleteTransaction()
         }
 
         // Back Button Click
@@ -81,23 +78,56 @@ class TransactionDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun deleteTransaction(transactionId: String) {
-        val userId = auth.currentUser?.uid
-        if (userId == null) {
-            Toast.makeText(this, "Error: User not logged in", Toast.LENGTH_SHORT).show()
+    private fun fetchTransactionDetails() {
+        progressBar.visibility = View.VISIBLE
+
+        val transactionRef = dbRef.child("users").child(auth.currentUser!!.uid).child("transactions").child(transactionId!!)
+
+        transactionRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                progressBar.visibility = View.GONE
+                if (snapshot.exists()) {
+                    // Fetch values safely and convert them correctly
+                    val amount = snapshot.child("amount").getValue(Double::class.java)?.toString() ?: "0.00"
+                    val category = snapshot.child("category").getValue(String::class.java) ?: "N/A"
+                    val timestamp = snapshot.child("timestamp").getValue(Any::class.java)?.toString() ?: "N/A"
+                    val description = snapshot.child("description").getValue(String::class.java) ?: "No description"
+
+                    // Set values to TextViews
+                    tvAmount.text = "Amount: ₹$amount"
+                    tvCategory.text = "Category: $category"
+                    tvDate.text = "Date: $timestamp"
+                    tvDescription.text = "Description: $description"
+                } else {
+                    Toast.makeText(this@TransactionDetailsActivity, "Transaction not found", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this@TransactionDetailsActivity, "Error: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+
+    private fun deleteTransaction() {
+        if (userId.isNullOrEmpty() || transactionId.isNullOrEmpty()) {
+            Toast.makeText(this, "Error: User ID or Transaction ID is missing", Toast.LENGTH_SHORT).show()
             return
         }
 
         progressBar.visibility = View.VISIBLE
         btnDeleteTransaction.isEnabled = false
 
-        // 🛠️ FIXED: Corrected Firebase path
-        dbRef.child("users").child(userId).child("transactions").child(transactionId)
-            .removeValue()
+        val transactionRef = dbRef.child("users").child(userId!!).child("transactions").child(transactionId!!)
+
+        transactionRef.removeValue()
             .addOnSuccessListener {
                 progressBar.visibility = View.GONE
                 Toast.makeText(this, "Transaction deleted successfully", Toast.LENGTH_SHORT).show()
-                finish() // Close this activity after deletion
+                finish()
             }
             .addOnFailureListener { e ->
                 progressBar.visibility = View.GONE
